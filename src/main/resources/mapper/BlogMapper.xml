@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zeye.blog.mapper.BlogMapper">
+
+    <!--查询文章管理列表多对一配置-->
+    <resultMap id="blog" type="com.zeye.blog.vo.BlogQuery">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="createTime" column="create_time"></result>
+        <result property="recommend" column="recommend"/>
+        <result property="published" column="published"/>
+        <result property="typeId" column="type_id"/>
+        <association property="type" javaType="com.zeye.blog.pojo.Type">
+            <id property="id" column="id"/>
+            <result property="name" column="name"/>
+        </association>
+    </resultMap>
+
+
+    <insert id="saveBlog" parameterType="com.zeye.blog.pojo.Blog">
+        insert into t_blog (id,title, content, first_picture, flag,
+                                   views, comment_count, appreciation, share_statement, commentabled, published,
+                                   recommend, create_time, update_time, type_id, user_id, description)
+        values (#{id},#{title},#{content},#{firstPicture},#{flag},#{views},#{commentCount},#{appreciation},
+                #{shareStatement},#{commentabled},#{published},#{recommend},#{createTime},
+                #{updateTime},#{typeId},#{userId},#{description});
+    </insert>
+
+    <select id="getAllBlogQuery" resultMap="blog">
+        select b.id,b.title,b.update_time,b.recommend,b.published,b.type_id,t.id,t.name,b.create_time
+        from t_blog b left outer join t_type t
+        on b.type_id = t.id order by b.update_time desc
+    </select>
+
+    <select id="getBlogById" resultType="com.zeye.blog.vo.ShowBlog">
+        select b.id,b.flag,b.title,b.content,b.type_id,
+               b.first_picture,b.description,b.recommend,b.published,b.share_statement,
+               b.appreciation,b.commentabled
+        from t_blog b
+        where  b.id = #{id};
+    </select>
+
+
+    <update id="updateBlog" parameterType="com.zeye.blog.vo.ShowBlog">
+        update t_blog set published = #{published},flag = #{flag} ,
+                                 title = #{title}, content = #{content}, type_id = #{typeId},
+                                 first_picture = #{firstPicture} , description = #{description} , recommend = #{recommend} ,
+                                 share_statement = #{shareStatement}, appreciation = #{appreciation},
+                                 commentabled = #{commentabled} ,update_time = #{updateTime} where id = #{id};
+    </update>
+
+    <delete id="deleteBlog" >
+        delete from t_blog where id =#{id}
+    </delete>
+
+    <!--bind 标签 用于模糊查询-->
+    <select id="searchByTitleAndType" parameterType="com.zeye.blog.vo.SearchBlog" resultMap="blog">
+        <bind name="pattern" value="'%' + title + '%'  "/>
+        select b.id,b.title,b.type_id,t.id,t.name from t_blog b,t_type t
+        <where>
+            <if test="1 == 1">
+                b.type_id = t.id
+            </if>
+            <if test="typeId != null">
+                and b.type_id = #{typeId}
+            </if>
+            <if test="title != null">
+                and b.title like #{pattern}
+            </if>
+        </where>
+    </select>
+
+
+    <!--查询首页最新博客列表信息-->
+    <resultMap id="firstPageBlog" type="com.zeye.blog.vo.FirstPageBlog">
+        <id property="id" column="id"></id>
+        <result property="title" column="title"></result>
+        <result property="firstPicture" column="first_picture"></result>
+        <result property="views" column="views"></result>
+        <result property="commentCount" column="comment_Count"></result>
+        <result property="createTime" column="create_time"></result>
+        <result property="updateTime" column="update_time"></result>
+        <result property="description" column="description"></result>
+        <result property="typeName" column="name"></result>
+        <result property="nickname" column="nickname"></result>
+        <result property="avatar" column="avatar"></result>
+    </resultMap>
+
+
+    <resultMap id="recommendBlog" type="com.zeye.blog.vo.RecommendBlog">
+        <id property="id" column="id"></id>
+        <result property="firstPicture" column="first_picture"></result>
+    </resultMap>
+
+    <!--查询首页最新博客列表信息-->
+    <select id="getAllFirstPageBlog" resultMap="firstPageBlog">
+        select  b.id,b.title,b.first_picture,b.views,b.comment_count,b.create_time,b.update_time,b.description,
+               t.name,
+               u.nickname, u.avatar
+        from t_blog b,t_type t,t_user u
+        where b.type_id = t.id and u.id = b.user_id
+        order by b.create_time desc
+    </select>
+
+    
+    <!--查询推荐文章  -->
+    <select id="getAllRecommendBlog" resultMap="recommendBlog">
+        SELECT
+            *
+        FROM
+            blog.t_blog
+        WHERE
+            t_blog.recommend = TRUE
+        ORDER BY
+            t_blog.create_time DESC LIMIT 4
+    </select>
+
+    <!--搜索博客列表-->
+    <select id="getSearchBlog" resultMap="firstPageBlog">
+        <bind name="pattern" value="'%' + query + '%' "/>
+        select  b.id,b.title,b.first_picture,b.views,b.comment_count,b.create_time,b.update_time,b.description,
+        t.name,
+        u.nickname, u.avatar
+        from t_blog b,t_type t,t_user u
+        where b.type_id = t.id and u.id = b.user_id and (b.title like #{pattern} or b.content like #{pattern})
+        order by b.update_time desc
+    </select>
+
+    <!--统计博客总数-->
+    <select id="getBlogTotal" resultType="Integer">
+        select count(*) from t_blog
+    </select>
+
+    <!-- 统计访问总数  coalesce(t1,t2)函数 t1表示取的值,t2表示如果值为null 则取0 -->
+    <select id="getBlogViewTotal" resultType="Integer">
+        select coalesce(sum(views),0) from t_blog
+    </select>
+
+    <!--统计评论总数-->
+    <select id="getBlogCommentTotal" resultType="Integer">
+        select count(*) from t_comment
+    </select>
+
+    <!--统计留言总数-->
+    <select id="getBlogMessageTotal" resultType="Integer">
+        select count(*) from t_message
+    </select>
+
+    <!--博客详细页的映射关系-->
+    <resultMap id="detailedBlog" type="com.zeye.blog.vo.DetailedBlog">
+        <id property="id" column="id"></id>
+        <result property="firstPicture" column="first_picture"></result>
+        <result property="flag" column="flag"></result>
+        <result property="title" column="title"></result>
+        <result property="content" column="content"></result>
+        <result property="views" column="views"></result>
+        <result property="commentCount" column="comment_count"></result>
+        <result property="updateTime" column="update_time"></result>
+        <result property="commentabled" column="commentabled"></result>
+        <result property="shareStatement" column="share_statement"></result>
+        <result property="appreciation" column="appreciation"></result>
+        <result property="nickname" column="nickname"></result>
+        <result property="avatar" column="avatar"></result>
+        <result property="typeName" column="name"></result>
+    </resultMap>
+
+    <!--根据id查询博客详细-->
+    <select id="getDetailedBlog" resultMap="detailedBlog">
+        select b.id,b.first_picture,b.flag,b.title,b.content,b.views,b.comment_count,b.update_time,b.commentabled,b.share_statement,b.appreciation, u.nickname,u.avatar,t.name
+        from t_blog b,t_user u,t_type t
+        where b.user_id = u.id and b.type_id = t.id and b.id = #{id}
+    </select>
+
+    <!--根据id更新文章访问记录    就是 我一个博客进来 游览+1-->
+    <update id="updateViews" parameterType="com.zeye.blog.pojo.Blog">
+        update t_blog set views = views + 1 where id = #{id}
+    </update>
+
+    <!--根据id查询出评论的数量并更新-->
+    <update id="getCommentCountByIdAndUpdate" parameterType="com.zeye.blog.pojo.Blog">
+        update t_blog b set b.comment_count = (
+            select count(*) from t_comment c where c.blog_id = #{id} and b.id = #{id}
+            ) where b.id = #{id}
+    </update>
+
+
+    <!--根据TypeId查询博客列表，显示在分类页面-->
+    <select id="getByTypeId" resultMap="firstPageBlog">
+        select b.id,b.title,b.first_picture,b.views,b.comment_count,b.update_time,b.description,
+               t.name,
+               u.nickname,u.avatar
+        from t_blog b,t_type t,t_user u
+        where b.type_id = t.id and u.id = b.user_id and b.type_id = #{typeId}
+        order by b.update_time desc
+    </select>
+
+
+
+
+
+
+
+
+</mapper>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zeye.blog.mapper.PicturesMapper">
+
+
+
+    <insert id="savePictures" parameterType="com.zeye.blog.pojo.Pictures">
+        insert into t_picture(pictureaddress, picturedescription, picturename, picturetime)
+        values (#{pictureaddress},#{picturedescription},#{picturename},#{picturetime})
+    </insert>
+
+    <select id="getAllPictures" resultType="com.zeye.blog.pojo.Pictures">
+        select * from t_picture
+    </select>
+
+    <select id="getPicturesById" resultType="com.zeye.blog.pojo.Pictures">
+        select * from t_picture where id = #{id}
+    </select>
+
+    <update id="updatePictures" parameterType="com.zeye.blog.pojo.Pictures">
+        update t_picture
+        set pictureaddress = #{pictureaddress},picturedescription = #{picturedescription},
+            picturename = #{picturename},picturetime=#{picturetime}
+        where id = #{id}
+    </update>
+
+    <delete id="deletePictures" >
+        delete from t_picture where id = #{id}
+    </delete>
+</mapper>

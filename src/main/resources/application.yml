@@ -1,0 +1,16 @@
+
+#关闭thymeleaf缓存      数据库配置
+spring:
+  thymeleaf:
+    cache: false
+  profiles:
+    active: pro #指定开发环境
+
+
+
+comment.avatar: /images/avatar.png
+message.avatar: /images/avatar.png
+
+
+
+

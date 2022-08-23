@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zeye.blog.mapper.UserMapper">
+
+        <!--
+         先自定义映射规则：resultMap将表中字段于数据库不一致一一对应
+        -->
+    <resultMap id="UserPOJOMap" type="com.zeye.blog.pojo.User">
+        <!--在映射规则时，主键是不可以省略的，不管名称一不一致-->
+        <id column="id" property="id"></id>
+        <result column="create_time" property="createTime"></result>
+        <result column="update_time" property="updateTime"></result>
+    </resultMap>
+    
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into t_user (nickname, username, password, email, type,avatar, create_time, update_time)
+        values (
+                #{nickname},#{username},#{password},#{email},#{type},#{avatar},#{createTime},#{updateTime}
+               );
+    </insert>
+
+    <select id="findByUsernameAndPassword" resultMap="UserPOJOMap">
+        select * from t_user where username = #{username} and password = #{password}
+    </select>
+
+
+</mapper>
